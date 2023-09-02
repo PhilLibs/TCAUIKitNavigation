@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "combine-interception",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/capturecontext/combine-interception",
+      "state" : {
+        "revision" : "e978a100d8e4a62228a2aa3e15d3b10b21326b85",
+        "version" : "0.0.1"
+      }
+    },
+    {
       "identity" : "combine-schedulers",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/combine-schedulers",

@@ -1,9 +1,10 @@
-#if canImport(UIKit)
+#if canImport(UIKit) && canImport(CombineInterception) && canImport(CombineRuntime)
 import Combine
 import ComposableArchitecture
 import OrderedCollections
 import UIKit
-
+@_exported import CombineRuntime
+@_exported import CombineInterception
 /// Coordinator which can be used to utilize the TCA `StackReducer` in UIKit.
 ///
 /// It automatically handle pop via the UI and notifies the StackReducer about it.
@@ -25,7 +26,7 @@ open class ComposableCoordinator<State: Equatable, Action>: NSObject, Coordinato
     fileprivate var cancellables: Set<AnyCancellable> = []
     private let isChild: Bool
     private weak var parent: Coordinator?
-    
+        
     public init(store: Store<StackState<State>, StackAction<State, Action>>,
                 navigationController: UINavigationController = .init(),
                 parent: Coordinator?,
@@ -215,13 +216,17 @@ open class ComposablePresentingCoordinator<State: Equatable, Action, PresentedSt
             .ifLet(
                 then: { [weak self] presentedStore in
                     guard let self else { return }
-//                    // TODO: Handling direct exchange without setting nil in between by first dismiss and after completion present via initiation the next one
+                    
                     let result = presentation(.init(state: ViewStore(presentedStore, observe: { $0 }).state, parent: nil, store: presentedStore))
                     presentedDestination = result.destination
-                    let viewController = PresentedViewControllerWrapper(wrappedController: result.controllerToPresent,
-                                                                        onDisapear: {
-                        presentationStore.send(.dismiss)
-                    })
+                    let viewController = result.controllerToPresent
+                    
+                    viewController.publisher(for: #selector(UIViewController.viewDidDisappear(_:)))
+                        .sink { _ in
+                            presentationStore.send(.dismiss)
+                        }
+                        .store(in: &cancellables)
+
                     viewController.modalPresentationStyle = result.style.modalPresentationStyle
                     navigationController.present(viewController, animated: true)
                 },
