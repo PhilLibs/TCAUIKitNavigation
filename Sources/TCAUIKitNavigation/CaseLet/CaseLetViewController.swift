@@ -79,6 +79,7 @@ public class CaseLetViewController<EnumState, EnumAction, CaseState, CaseAction>
         }
         navigationController.setViewControllers(viewControllers, animated: needsManualRefresh)
     }
+}
 
 
 
