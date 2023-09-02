@@ -267,7 +267,7 @@ public struct PresentationResult {
     var controllerToPresent: UIViewController {
         switch destination {
         case .view(let viewController):
-            return viewController
+            return UINavigationController(rootViewController: viewController)
         case .coordinator(let coordinator):
             return coordinator.viewControllerToPresent()
         }
