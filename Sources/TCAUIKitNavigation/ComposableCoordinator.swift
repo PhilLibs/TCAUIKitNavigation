@@ -13,6 +13,7 @@ import UIKit
 /// - Note: This class is intended to be subclassed to provide a leaner intializer for example by providing a implementation of the `destinatiom` closure.
 open class ComposableCoordinator<State: Equatable, Action>: NSObject, Coordinator, UINavigationControllerDelegate {
     @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.caseLetHelper) var caseLetHelper
     
     private let store: Store<StackState<State>, StackAction<State, Action>>
     private let viewStore: ViewStore<StackState<State>, StackAction<State, Action>>
@@ -85,7 +86,7 @@ open class ComposableCoordinator<State: Equatable, Action>: NSObject, Coordinato
     public func handleNavigationControllerTransition(to viewController: UIViewController) -> Bool {
         guard let toIdEntry = destinationIdMapping.first(where: { switch $0.value {
         case .view(let existingController):
-            return viewController == existingController
+            return viewController === existingController || caseLetHelper.isResolvedCaseLetViewController(viewController)
         case .coordinator:
             return false
         }

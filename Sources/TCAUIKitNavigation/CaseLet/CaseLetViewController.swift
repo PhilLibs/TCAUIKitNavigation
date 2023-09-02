@@ -1,19 +1,21 @@
 #if canImport(UIKit)
 import Combine
 import ComposableArchitecture
+import Dependencies
 import UIKit
 
-public class CaseLetViewController<EnumState, EnumAction, CaseState, CaseAction, Content: UIViewController>: UIViewController {
+public class CaseLetViewController<EnumState, EnumAction, CaseState, CaseAction>: UIViewController {
+    @Dependency(\.caseLetHelper) var caseLetHelper
     public let store: Store<EnumState, EnumAction>
     public let toCaseState: (EnumState) -> CaseState?
     public let fromCaseAction: (CaseAction) -> EnumAction
-    public let content: (_ store: Store<CaseState, CaseAction>) -> Content
+    public let content: (_ store: Store<CaseState, CaseAction>) -> UIViewController
     private var cancellables = Set<AnyCancellable>()
     
-   public init(store: Store<EnumState, EnumAction>,
+    public init(store: Store<EnumState, EnumAction>,
          toCaseState: @escaping (EnumState) -> CaseState?,
          action fromCaseAction: @escaping (CaseAction) -> EnumAction,
-         then content: @escaping (_ store: Store<CaseState, CaseAction>) -> Content) {
+         then content: @escaping (_ store: Store<CaseState, CaseAction>) -> UIViewController) {
         self.store = store
         self.toCaseState = toCaseState
         self.fromCaseAction = fromCaseAction
@@ -30,7 +32,7 @@ public class CaseLetViewController<EnumState, EnumAction, CaseState, CaseAction,
         super.viewDidLoad()
         store.scope(state: toCaseState, action: fromCaseAction)
             .ifLet { [weak self] store in
-                self?.embedContent(store: store)
+                self?.replaceContent(store: store)
             }
             .store(in: &cancellables)
     }
@@ -57,5 +59,45 @@ public class CaseLetViewController<EnumState, EnumAction, CaseState, CaseAction,
         self.addChild(content)
         content.didMove(toParent: self)
     }
+    
+    private func replaceContent(store: Store<CaseState, CaseAction>) {
+        guard let navigationController, let index = navigationController.viewControllers.firstIndex(of: self) else {
+            assertionFailure("\(Self.self) tried to replace view controller without being part of current navigation hierarchy")
+            return
+        }
+        let content = content(store)
+        caseLetHelper.markAsCaseLetViewController(content, of: self)
+        var viewControllers = navigationController.viewControllers
+        viewControllers[index] = content
+        let needsManualRefresh = navigationController.viewControllers.count == index + 1
+        if needsManualRefresh {
+            // Replacing the navigation stack too fast results in a broken UINavigationBar.
+            // A potential workaround is to pop & push and eventually set the viewcontrollers animated.
+            // The pop & push fixes the empty UINavigationBar and the animated set fixes the wrong back button in a root view.
+            navigationController.popViewController(animated: false)
+            navigationController.pushViewController(content, animated: false)
+        }
+        navigationController.setViewControllers(viewControllers, animated: needsManualRefresh)
+    }
+
+
+
+#endif
+#if canImport(SwiftUI) && canImport(UIKit)
+import SwiftUI
+
+extension CaseLetViewController {
+    @_disfavoredOverload
+    public convenience init<Content: View>(store: Store<EnumState, EnumAction>,
+          toCaseState: @escaping (EnumState) -> CaseState?,
+          action fromCaseAction: @escaping (CaseAction) -> EnumAction,
+          then content: @escaping (_ store: Store<CaseState, CaseAction>) -> Content) {
+        self.init(
+            store: store,
+            toCaseState: toCaseState,
+            action: fromCaseAction,
+            then: { UIHostingController(rootView: content($0)) }
+        )
+     }
 }
 #endif

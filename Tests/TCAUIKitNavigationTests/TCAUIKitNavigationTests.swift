@@ -100,6 +100,7 @@ final class TCAUIKitNavigationTests: XCTestCase {
         let navigationController = NavigationControllerMock()
         let testCoordinator = withDependencies {
             $0.mainQueue = .immediate
+            $0.caseLetHelper = LiveCaseLetHelper()
         } operation: {
             TestCoordinator(store: store, navigationController: navigationController, parent: nil)
         }
