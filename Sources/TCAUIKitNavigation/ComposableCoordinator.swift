@@ -1,10 +1,9 @@
-#if canImport(UIKit) && canImport(CombineInterception) && canImport(CombineRuntime)
+#if canImport(UIKit)
 import Combine
 import ComposableArchitecture
 import OrderedCollections
 import UIKit
-@_exported import CombineRuntime
-@_exported import CombineInterception
+import CombineInterception
 /// Coordinator which can be used to utilize the TCA `StackReducer` in UIKit.
 ///
 /// It automatically handle pop via the UI and notifies the StackReducer about it.

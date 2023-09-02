@@ -37,29 +37,6 @@ public class CaseLetViewController<EnumState, EnumAction, CaseState, CaseAction>
             .store(in: &cancellables)
     }
     
-    private func embedContent(store: Store<CaseState, CaseAction>) {
-        let content = content(store)
-        
-        self.view.subviews.forEach { $0.removeFromSuperview() }
-        self.children.forEach { $0.removeFromParent() }
-        
-        guard let contentView = content.view else {
-            return
-        }
-        self.view.addSubview(contentView)
-        contentView.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            contentView.topAnchor.constraint(equalTo: self.view.topAnchor),
-            contentView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
-            contentView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
-        ])
-        
-        self.addChild(content)
-        content.didMove(toParent: self)
-    }
-    
     private func replaceContent(store: Store<CaseState, CaseAction>) {
         guard let navigationController, let index = navigationController.viewControllers.firstIndex(of: self) else {
             assertionFailure("\(Self.self) tried to replace view controller without being part of current navigation hierarchy")
@@ -80,10 +57,8 @@ public class CaseLetViewController<EnumState, EnumAction, CaseState, CaseAction>
         navigationController.setViewControllers(viewControllers, animated: needsManualRefresh)
     }
 }
-
-
-
 #endif
+
 #if canImport(SwiftUI) && canImport(UIKit)
 import SwiftUI
 
